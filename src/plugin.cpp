@@ -83,7 +83,7 @@ extern "C" {
 /**
  * The plugin information structure
  */
-static PLUGIN_INFORMATION info = {
+static PLUGIN_INFORMATION m_info = {
     FILTER_NAME, 			// Name
     VERSION,				// Version
     0,                      // Flags
@@ -92,16 +92,11 @@ static PLUGIN_INFORMATION info = {
     default_config	        // Default plugin configuration
 };
 
-// typedef struct {
-// 	FledgeFilter *handle;
-// 	std::string	configCatName;
-// } FILTER_INFO;
-
 /**
  * Return the information about this plugin
  */
 PLUGIN_INFORMATION* plugin_info() {
-    return &info;
+    return &m_info;
 }
 
 /**

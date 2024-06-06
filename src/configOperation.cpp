@@ -2,7 +2,6 @@
 #include "constantsOperation.h"
 #include "utilityOperation.h"
 
-#include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
 using namespace std;
@@ -10,12 +9,12 @@ using namespace rapidjson;
 
 /**
  * Import data in the form of Exchanged_data
- * The data is saved in a map m_dataOperation
+ * The data is saved in a maps m_dataOperation
  * 
  * @param exchangeConfig : configuration Exchanged_data as a string 
 */
 void ConfigOperation::importExchangedData(const string & exchangeConfig) {
-    std::string beforeLog = ConstantsOperation::NamePlugin + " - ConfigOperation::importExchangedData : ";
+    std::string beforeLog = ConstantsOperation::NamePlugin + " - ConfigOperation::importExchangedData :";
     m_dataOperation.clear();
     m_dataOperationLookup.clear();
     Document document;
@@ -44,103 +43,7 @@ void ConfigOperation::importExchangedData(const string & exchangeConfig) {
     const Value& datapoints = exchangeData[ConstantsOperation::JsonDatapoints];
     std::set<std::string> foundPivotIds;
     for (const Value& datapoint : datapoints.GetArray()) {
-        if (!datapoint.IsObject()) {
-            UtilityOperation::log_error("%s %s element is not an object", beforeLog.c_str(), ConstantsOperation::JsonDatapoints);
-            continue;
-        }
-        
-        if (!datapoint.HasMember(ConstantsOperation::JsonPivotType) || !datapoint[ConstantsOperation::JsonPivotType].IsString()) {
-            UtilityOperation::log_error("%s %s does not exist or is not a string", beforeLog.c_str(), ConstantsOperation::JsonPivotType);
-            continue;
-        }
-
-        if (!datapoint.HasMember(ConstantsOperation::JsonPivotId) || !datapoint[ConstantsOperation::JsonPivotId].IsString()) {
-            UtilityOperation::log_error("%s %s does not exist or is not a string", beforeLog.c_str(), ConstantsOperation::JsonPivotId);
-            continue;
-        }
-
-        if (!datapoint.HasMember(ConstantsOperation::JsonLabel) || !datapoint[ConstantsOperation::JsonLabel].IsString()) {
-            UtilityOperation::log_error("%s %s does not exist or is not a string", beforeLog.c_str(), ConstantsOperation::JsonLabel);
-            continue;
-        }
-
-        std::string outputPivotId = datapoint[ConstantsOperation::JsonPivotId].GetString();
-        foundPivotIds.insert(outputPivotId);
-
-        DataOperationInfo operationInfo;
-        operationInfo.outputAssetName = datapoint[ConstantsOperation::JsonLabel].GetString();
-        operationInfo.outputPivotType = datapoint[ConstantsOperation::JsonPivotType].GetString();
-        if (operationInfo.outputPivotType != ConstantsOperation::JsonCdcSps && operationInfo.outputPivotType != ConstantsOperation::JsonCdcDps) {
-            continue;
-        }
-        
-        if (!datapoint.HasMember(ConstantsOperation::JsonOperations) || !datapoint[ConstantsOperation::JsonOperations].IsArray()) {
-            continue;
-        }
-        bool malformedOperation = false;
-        auto operations = datapoint[ConstantsOperation::JsonOperations].GetArray();
-        for (rapidjson::Value::ConstValueIterator itr = operations.Begin(); itr != operations.End(); ++itr) {
-            if (!(*itr).IsObject()) {
-                UtilityOperation::log_error("%s %s element is not an object", beforeLog.c_str(), ConstantsOperation::JsonOperations);
-                malformedOperation = true;
-                break;
-            }
-            auto operation = (*itr).GetObject();
-
-            if (!operation.HasMember(ConstantsOperation::JsonOperation) || !operation[ConstantsOperation::JsonOperation].IsString()) {
-                UtilityOperation::log_error("%s %s does not exist or is not a string", beforeLog.c_str(), ConstantsOperation::JsonOperation);
-                malformedOperation = true;
-                break;
-            }
-
-            operationInfo.operationType = operation[ConstantsOperation::JsonOperation].GetString();
-            if (!m_supportedOperationTypes.count(operationInfo.operationType)) {
-                UtilityOperation::log_error("%s '%s' is not a supported operation type", beforeLog.c_str(), operationInfo.operationType.c_str());
-                malformedOperation = true;
-                break;
-            }
-
-            if (!operation.HasMember(ConstantsOperation::JsonInput) || !operation[ConstantsOperation::JsonInput].IsArray()) {
-                UtilityOperation::log_error("%s %s does not exist or is not an array", beforeLog.c_str(), ConstantsOperation::JsonInput);
-                malformedOperation = true;
-                break;
-            }
-
-            auto inputs = operation[ConstantsOperation::JsonInput].GetArray();
-            for (rapidjson::Value::ConstValueIterator itr2 = inputs.Begin(); itr2 != inputs.End(); ++itr2) {
-                if (!(*itr2).IsString()) {
-                    UtilityOperation::log_error("%s %s element is not a string", beforeLog.c_str(), ConstantsOperation::JsonInput);
-                    malformedOperation = true;
-                    break;
-                }
-                std::string inputPivotId = (*itr2).GetString();
-                operationInfo.inputPivotIds.push_back(inputPivotId);
-            }
-            if (malformedOperation) {
-                break;
-            }
-        }
-        if (malformedOperation) {
-            continue;
-        }
-        
-        if(m_dataOperation.count(outputPivotId)) {
-            UtilityOperation::log_error("%s An operation already exists for Pivot ID '%s' (this may indicate a duplicate Pivot ID)",
-                                        beforeLog.c_str(), outputPivotId.c_str());
-            continue;
-        }
-        m_dataOperation[outputPivotId] = operationInfo;
-        for(const auto& inputPivotId: operationInfo.inputPivotIds) {
-            if(m_dataOperationLookup.count(inputPivotId)) {
-                m_dataOperationLookup[inputPivotId].push_back(outputPivotId);
-            }
-            else {
-                m_dataOperationLookup[inputPivotId] = {outputPivotId};
-            }
-        }
-        UtilityOperation::log_debug("%s Configured '%s' operation for inputs [%s] and output %s", beforeLog.c_str(),
-                                    operationInfo.operationType.c_str(), UtilityOperation::join(operationInfo.inputPivotIds).c_str(),
-                                    outputPivotId.c_str());
+        importDataPoint(datapoint, foundPivotIds);
     }
 
     // Sanity check on the input Pivot IDs listed
@@ -152,14 +55,126 @@ void ConfigOperation::importExchangedData(const string & exchangeConfig) {
 }
 
 /**
+ * Import a datapoint found in Exchanged_data
+ * The data is saved in a maps m_dataOperation
+ * 
+ * @param datapoint : datapoint to import
+ * @param out_foundPivotIds : Out parameter storing any pivot ID found in the configuration
+*/
+void ConfigOperation::importDataPoint(const Value& datapoint, std::set<std::string>& out_foundPivotIds) {
+    std::string beforeLog = ConstantsOperation::NamePlugin + " - ConfigOperation::importDataPoint :";
+    if (!datapoint.IsObject()) {
+        UtilityOperation::log_error("%s %s element is not an object", beforeLog.c_str(), ConstantsOperation::JsonDatapoints);
+        return;
+    }
+    
+    if (!datapoint.HasMember(ConstantsOperation::JsonPivotType) || !datapoint[ConstantsOperation::JsonPivotType].IsString()) {
+        UtilityOperation::log_error("%s %s does not exist or is not a string", beforeLog.c_str(), ConstantsOperation::JsonPivotType);
+        return;
+    }
+
+    if (!datapoint.HasMember(ConstantsOperation::JsonPivotId) || !datapoint[ConstantsOperation::JsonPivotId].IsString()) {
+        UtilityOperation::log_error("%s %s does not exist or is not a string", beforeLog.c_str(), ConstantsOperation::JsonPivotId);
+        return;
+    }
+
+    if (!datapoint.HasMember(ConstantsOperation::JsonLabel) || !datapoint[ConstantsOperation::JsonLabel].IsString()) {
+        UtilityOperation::log_error("%s %s does not exist or is not a string", beforeLog.c_str(), ConstantsOperation::JsonLabel);
+        return;
+    }
+
+    std::string outputPivotId = datapoint[ConstantsOperation::JsonPivotId].GetString();
+    out_foundPivotIds.insert(outputPivotId);
+
+    DataOperationInfo operationInfo;
+    operationInfo.outputAssetName = datapoint[ConstantsOperation::JsonLabel].GetString();
+    operationInfo.outputPivotType = datapoint[ConstantsOperation::JsonPivotType].GetString();
+    if (operationInfo.outputPivotType != ConstantsOperation::JsonCdcSps && operationInfo.outputPivotType != ConstantsOperation::JsonCdcDps) {
+        return;
+    }
+    
+    if (!datapoint.HasMember(ConstantsOperation::JsonOperations) || !datapoint[ConstantsOperation::JsonOperations].IsArray()) {
+        return;
+    }
+    auto operations = datapoint[ConstantsOperation::JsonOperations].GetArray();
+    for (rapidjson::Value::ConstValueIterator itr = operations.Begin(); itr != operations.End(); ++itr) {
+        if (!importOperation(itr, operationInfo)) {
+            return;
+        }
+    }
+    
+    if(m_dataOperation.count(outputPivotId)) {
+        UtilityOperation::log_error("%s An operation already exists for Pivot ID '%s' (this may indicate a duplicate Pivot ID)",
+                                    beforeLog.c_str(), outputPivotId.c_str());
+        return;
+    }
+    m_dataOperation[outputPivotId] = operationInfo;
+    for(const auto& inputPivotId: operationInfo.inputPivotIds) {
+        if(m_dataOperationLookup.count(inputPivotId)) {
+            m_dataOperationLookup[inputPivotId].push_back(outputPivotId);
+        }
+        else {
+            m_dataOperationLookup[inputPivotId] = {outputPivotId};
+        }
+    }
+    UtilityOperation::log_debug("%s Configured '%s' operation for inputs [%s] and output %s", beforeLog.c_str(),
+                                operationInfo.operationType.c_str(), UtilityOperation::join(operationInfo.inputPivotIds).c_str(),
+                                outputPivotId.c_str());
+}
+
+/**
+ * Import an operation found in Exchanged_data
+ * The data is saved in a maps m_dataOperation
+ * 
+ * @param itr : Iterator pointing to the operation object to import
+ * @param out_operationInfo : Out parameter storing the operation information
+ * @return true if the import was a success, else false
+*/
+bool ConfigOperation::importOperation(rapidjson::Value::ConstValueIterator itr, DataOperationInfo& out_operationInfo) {
+    std::string beforeLog = ConstantsOperation::NamePlugin + " - ConfigOperation::importOperation :";
+    if (!(*itr).IsObject()) {
+        UtilityOperation::log_error("%s %s element is not an object", beforeLog.c_str(), ConstantsOperation::JsonOperations);
+        return false;
+    }
+    auto operation = (*itr).GetObject();
+
+    if (!operation.HasMember(ConstantsOperation::JsonOperation) || !operation[ConstantsOperation::JsonOperation].IsString()) {
+        UtilityOperation::log_error("%s %s does not exist or is not a string", beforeLog.c_str(), ConstantsOperation::JsonOperation);
+        return false;
+    }
+
+    out_operationInfo.operationType = operation[ConstantsOperation::JsonOperation].GetString();
+    if (!m_supportedOperationTypes.count(out_operationInfo.operationType)) {
+        UtilityOperation::log_error("%s '%s' is not a supported operation type", beforeLog.c_str(), out_operationInfo.operationType.c_str());
+        return false;
+    }
+
+    if (!operation.HasMember(ConstantsOperation::JsonInput) || !operation[ConstantsOperation::JsonInput].IsArray()) {
+        UtilityOperation::log_error("%s %s does not exist or is not an array", beforeLog.c_str(), ConstantsOperation::JsonInput);
+        return false;
+    }
+
+    auto inputs = operation[ConstantsOperation::JsonInput].GetArray();
+    for (rapidjson::Value::ConstValueIterator itr2 = inputs.Begin(); itr2 != inputs.End(); ++itr2) {
+        if (!(*itr2).IsString()) {
+            UtilityOperation::log_error("%s %s element is not a string", beforeLog.c_str(), ConstantsOperation::JsonInput);
+            return false;
+        }
+        std::string inputPivotId = (*itr2).GetString();
+        out_operationInfo.inputPivotIds.push_back(inputPivotId);
+    }
+    return true;
+}
+
+/**
  * Returns the list of outputIds with an operation that involves the given inputId
  * 
  * @param inputId : Input ID to look for
  * @return The list of outputIds if any, else an empty list
 */
-const std::vector<std::string>& ConfigOperation::getOutputIdsForInputId(const std::string& inputId) {
+const std::vector<std::string>& ConfigOperation::getOutputIdsForInputId(const std::string& inputId) const {
     if (m_dataOperationLookup.count(inputId)) {
-        return m_dataOperationLookup[inputId];
+        return m_dataOperationLookup.at(inputId);
     }
     else {
         static std::vector<std::string> empty;

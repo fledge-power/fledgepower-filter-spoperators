@@ -32,10 +32,12 @@ public:
 
     void setJsonConfig(const std::string& jsonExchanged);
 
-    ConfigOperation getConfigOperation() { return m_configOperation;} 
-    Reading *generateReadingOperation(Reading *dps, const std::string& outputPivotId);
+    const ConfigOperation& getConfigOperation() const { return m_configOperation;} 
+    Reading *generateReadingOperation(const Reading *dps, const std::string& outputPivotId);
 
 private:
+    bool processReading(Reading* reading, std::vector<Reading*>& out_vectorReadingOperation);
+
     std::mutex                  m_configMutex;
     ConfigOperation             m_configOperation;
     std::map<std::string, int>  m_cachedValues;

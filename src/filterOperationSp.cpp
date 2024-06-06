@@ -74,83 +74,9 @@ void FilterOperationSp::ingest(READINGSET *readingSet)
         auto readIt = readings->begin();
         while(readIt != readings->end()) {
             Reading* reading = *readIt;
-            // Get datapoints on readings
-            Datapoints &dataPoints = reading->getReadingData();
-            string assetName = reading->getAssetName();
-
-            string beforeLog = ConstantsOperation::NamePlugin + " - " + assetName + " - FilterOperationSp::ingest :";
-
-            Datapoints *dpPivotTS = findDictElement(&dataPoints, ConstantsOperation::KeyMessagePivotJsonRoot);
-            if (dpPivotTS == nullptr) {
-                UtilityOperation::log_debug("%s Missing %s attribute, it is ignored", beforeLog.c_str(), ConstantsOperation::KeyMessagePivotJsonRoot.c_str());
-                readIt++;
-                continue;
-            }
-
-            Datapoints *dpGtis = findDictElement(dpPivotTS, ConstantsOperation::KeyMessagePivotJsonGt);
-            if (dpGtis == nullptr) {
-                UtilityOperation::log_debug("%s Missing %s attribute, it is ignored", beforeLog.c_str(), ConstantsOperation::KeyMessagePivotJsonGt.c_str());
-                readIt++;
-                continue;
-            }
-
-            string inputPivotId = findStringElement(dpGtis, ConstantsOperation::KeyMessagePivotJsonId);
-            if (inputPivotId.compare("") == 0) {
-                UtilityOperation::log_debug("%s Missing %s attribute, it is ignored", beforeLog.c_str(), ConstantsOperation::KeyMessagePivotJsonId.c_str());
-                readIt++;
-                continue;
-            }
-
-            const auto& outputPivotIds = m_configOperation.getOutputIdsForInputId(inputPivotId);
-            if (outputPivotIds.empty()) {
-                UtilityOperation::log_debug("%s No operation configured for Pivot ID %s", beforeLog.c_str(), inputPivotId.c_str());
-                readIt++;
-                continue;
-            }
-
-            bool typeSps = true;
-            Datapoints *dpTyp = findDictElement(dpGtis, ConstantsOperation::JsonCdcSps);
-            if (dpTyp == nullptr) {
-                dpTyp = findDictElement(dpGtis, ConstantsOperation::JsonCdcDps);
-                
-                if (dpTyp == nullptr) {
-                    UtilityOperation::log_debug("%s Missing CDC (%s and %s missing) attribute, it is ignored", beforeLog.c_str(), ConstantsOperation::JsonCdcSps.c_str(), ConstantsOperation::JsonCdcDps.c_str());
-                    readIt++;
-                    continue;
-                }
-                typeSps = false;
-            }            
-
-            DatapointValue *valueTS = findValueElement(dpTyp, ConstantsOperation::KeyMessagePivotJsonStVal);
-            if (valueTS == nullptr) {
-                UtilityOperation::log_debug("%s Missing %s attribute, it is ignored", beforeLog.c_str(), ConstantsOperation::KeyMessagePivotJsonStVal.c_str());
-                readIt++;
-                continue;
-            }
-
-            int newValue = 0;
-            if (typeSps) {
-                newValue = valueTS->toInt();
-            }
-            else {
-                newValue = valueTS->toStringValue() == "on" ? 1 : 0;
-            }
-
-            bool inputIsInOutputs = false;
-            for(const std::string& outputPivotId: outputPivotIds) {
-                m_cachedValues[inputPivotId] = newValue;
-                Reading* newReading = generateReadingOperation(reading, outputPivotId);
-                if (newReading != nullptr){
-                    UtilityOperation::log_debug("%s Generation of the reading [%s]", beforeLog.c_str(), newReading->toJSON().c_str());
-                    vectorReadingOperation.push_back(newReading);
-                    // Only delete input reading if a replacement was generated
-                    if (inputPivotId == outputPivotId) {
-                        inputIsInOutputs = true;
-                    }
-                }
-            }
+            bool deleteInput = processReading(reading, vectorReadingOperation);
             // If input TI is one of the output TIs, remove the original input reading as a new value for it was already generated
-            if (inputIsInOutputs) {
+            if (deleteInput) {
                 readIt = readings->erase(readIt);
             }
             else {
@@ -164,13 +90,93 @@ void FilterOperationSp::ingest(READINGSET *readingSet)
 }
 
 /**
+ * Apply filter for the given rading
+ *
+ * @param reading The reading to filter
+ * @param out_vectorReadingOperation Out parameter storing all generated readings
+ * @return true if the input reading should be deleted, else false
+ */
+bool FilterOperationSp::processReading(Reading* reading, std::vector<Reading*>& out_vectorReadingOperation) {
+    // Get datapoints on readings
+    Datapoints &dataPoints = reading->getReadingData();
+    string assetName = reading->getAssetName();
+
+    string beforeLog = ConstantsOperation::NamePlugin + " - " + assetName + " - FilterOperationSp::processReading :";
+
+    Datapoints *dpPivotTS = findDictElement(&dataPoints, ConstantsOperation::KeyMessagePivotJsonRoot);
+    if (dpPivotTS == nullptr) {
+        UtilityOperation::log_debug("%s Missing %s attribute, it is ignored", beforeLog.c_str(), ConstantsOperation::KeyMessagePivotJsonRoot.c_str());
+        return false;
+    }
+
+    Datapoints *dpGtis = findDictElement(dpPivotTS, ConstantsOperation::KeyMessagePivotJsonGt);
+    if (dpGtis == nullptr) {
+        UtilityOperation::log_debug("%s Missing %s attribute, it is ignored", beforeLog.c_str(), ConstantsOperation::KeyMessagePivotJsonGt.c_str());
+       return false;
+    }
+
+    string inputPivotId = findStringElement(dpGtis, ConstantsOperation::KeyMessagePivotJsonId);
+    if (inputPivotId.compare("") == 0) {
+        UtilityOperation::log_debug("%s Missing %s attribute, it is ignored", beforeLog.c_str(), ConstantsOperation::KeyMessagePivotJsonId.c_str());
+        return false;
+    }
+
+    const auto& outputPivotIds = m_configOperation.getOutputIdsForInputId(inputPivotId);
+    if (outputPivotIds.empty()) {
+        UtilityOperation::log_debug("%s No operation configured for Pivot ID %s", beforeLog.c_str(), inputPivotId.c_str());
+        return false;
+    }
+
+    bool typeSps = true;
+    Datapoints *dpTyp = findDictElement(dpGtis, ConstantsOperation::JsonCdcSps);
+    if (dpTyp == nullptr) {
+        dpTyp = findDictElement(dpGtis, ConstantsOperation::JsonCdcDps);
+        
+        if (dpTyp == nullptr) {
+            UtilityOperation::log_debug("%s Missing CDC (%s and %s missing) attribute, it is ignored", beforeLog.c_str(), ConstantsOperation::JsonCdcSps.c_str(), ConstantsOperation::JsonCdcDps.c_str());
+            return false;
+        }
+        typeSps = false;
+    }            
+
+    const DatapointValue *valueTS = findValueElement(dpTyp, ConstantsOperation::KeyMessagePivotJsonStVal);
+    if (valueTS == nullptr) {
+        UtilityOperation::log_debug("%s Missing %s attribute, it is ignored", beforeLog.c_str(), ConstantsOperation::KeyMessagePivotJsonStVal.c_str());
+        return false;
+    }
+
+    int newValue = 0;
+    if (typeSps) {
+        newValue = static_cast<int>(valueTS->toInt());
+    }
+    else {
+        newValue = valueTS->toStringValue() == "on" ? 1 : 0;
+    }
+
+    bool inputIsInOutputs = false;
+    for(const std::string& outputPivotId: outputPivotIds) {
+        m_cachedValues[inputPivotId] = newValue;
+        Reading* newReading = generateReadingOperation(reading, outputPivotId);
+        if (newReading != nullptr){
+            UtilityOperation::log_debug("%s Generation of the reading [%s]", beforeLog.c_str(), newReading->toJSON().c_str());
+            out_vectorReadingOperation.push_back(newReading);
+            // Only delete input reading if a replacement was generated
+            if (inputPivotId == outputPivotId) {
+                inputIsInOutputs = true;
+            }
+        }
+    }
+    return inputIsInOutputs;
+}
+
+/**
  * Generate of reading for operation
  * 
  * @param reading initial reading
  * @param outputPivotId pivot ID of the output TI to produce
  * @return a modified reading
 */
-Reading *FilterOperationSp::generateReadingOperation(Reading *reading, const std::string& outputPivotId) {
+Reading *FilterOperationSp::generateReadingOperation(const Reading *reading, const std::string& outputPivotId) {
     string beforeLog = ConstantsOperation::NamePlugin + " - FilterOperationSp::generateReadingOperation :";
     
     // Find operation info to generate the reading

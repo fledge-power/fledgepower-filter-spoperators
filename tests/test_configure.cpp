@@ -1,7 +1,6 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "filterOperationSp.h"
 
-#include <filterOperationSp.h>
+#include <gtest/gtest.h>
 
 extern "C" {
     PLUGIN_INFORMATION* plugin_info();

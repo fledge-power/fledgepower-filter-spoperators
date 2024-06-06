@@ -1,11 +1,9 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
 #include <filterOperationSp.h>
 
-using namespace std;
+#include <gtest/gtest.h>
 
-static string reconfigure = QUOTE({
+
+static std::string reconfigure = QUOTE({
     "enable": {
         "value": "false"
     }
@@ -16,7 +14,7 @@ extern "C" {
 			  OUTPUT_HANDLE *outHandle,
 			  OUTPUT_STREAM output);
 
-    void plugin_reconfigure(PLUGIN_HANDLE handle, const string& newConfig);
+    void plugin_reconfigure(PLUGIN_HANDLE handle, const std::string& newConfig);
     void plugin_shutdown(PLUGIN_HANDLE handle);
 };
 

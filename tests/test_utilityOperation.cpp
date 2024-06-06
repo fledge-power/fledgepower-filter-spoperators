@@ -1,6 +1,7 @@
+#include "utilityOperation.h"
+
 #include <gtest/gtest.h>
 
-#include "utilityOperation.h"
 
 TEST(OperationUtilityTest, Join)
 {

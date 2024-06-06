@@ -1,10 +1,11 @@
-#include <gtest/gtest.h>
-#include <plugin_api.h>
-#include <rapidjson/document.h>
-
 #include "version.h"
 
-using namespace std;
+#include <plugin_api.h>
+
+#include <rapidjson/document.h>
+#include <gtest/gtest.h>
+
+
 using namespace rapidjson;
 
 extern "C" {

@@ -1,13 +1,11 @@
-#include <regex>
-#include <queue>
-#include <gtest/gtest.h>
-#include <plugin_api.h>
-#include <reading.h>
-#include <reading_set.h>
-#include <filter.h>
-#include <rapidjson/document.h>
 #include "filterOperationSp.h"
 #include "utilityOperation.h"
+
+#include <gtest/gtest.h>
+
+#include <regex>
+#include <queue>
+
 
 using namespace rapidjson;
 

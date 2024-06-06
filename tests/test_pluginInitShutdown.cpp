@@ -1,9 +1,7 @@
-#include <gmock/gmock.h>
+#include "filterOperationSp.h"
+
 #include <gtest/gtest.h>
 
-#include <filterOperationSp.h>
-
-using namespace std;
 
 extern "C" {
 	PLUGIN_INFORMATION *plugin_info();
