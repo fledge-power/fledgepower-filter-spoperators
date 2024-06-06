@@ -30,7 +30,7 @@ protected:
     {
 		void *handle = nullptr;
         ASSERT_NO_THROW(handle = plugin_init(nullptr, nullptr, nullptr));
-		filter = (FilterOperationSp *) handle;
+		filter = static_cast<FilterOperationSp*>(handle);
         ASSERT_NE(filter, nullptr);
     }
 
@@ -38,13 +38,13 @@ protected:
     void TearDown() override
     {
         if (filter) {
-            ASSERT_NO_THROW(plugin_shutdown(reinterpret_cast<PLUGIN_HANDLE*>(filter)));
+            ASSERT_NO_THROW(plugin_shutdown(static_cast<PLUGIN_HANDLE>(filter)));
         }
     }   
 };
 
 TEST_F(PluginReconfigure, Reconfigure) 
 {
-	plugin_reconfigure((PLUGIN_HANDLE*)filter, reconfigure);
+	plugin_reconfigure(static_cast<PLUGIN_HANDLE>(filter), reconfigure);
     ASSERT_EQ(filter->isEnabled(), false);
 }

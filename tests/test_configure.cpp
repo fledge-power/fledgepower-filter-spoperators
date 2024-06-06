@@ -8,7 +8,7 @@ extern "C" {
     PLUGIN_HANDLE plugin_init(ConfigCategory* config,
         OUTPUT_HANDLE* outHandle,
         OUTPUT_STREAM output);
-    void plugin_shutdown(PLUGIN_HANDLE *handle);
+    void plugin_shutdown(PLUGIN_HANDLE handle);
 };
 
 class PluginConfigureTest : public testing::Test
@@ -21,7 +21,7 @@ protected:
     {
 		void *handle = nullptr;
         ASSERT_NO_THROW(handle = plugin_init(nullptr, nullptr, nullptr));
-		filter = (FilterOperationSp *) handle;
+		filter = static_cast<FilterOperationSp*>(handle);
         ASSERT_NE(filter, nullptr);
     }
 
@@ -29,7 +29,7 @@ protected:
     void TearDown() override
     {
         if (filter) {
-            ASSERT_NO_THROW(plugin_shutdown(reinterpret_cast<PLUGIN_HANDLE*>(filter)));
+            ASSERT_NO_THROW(plugin_shutdown(static_cast<PLUGIN_HANDLE>(filter)));
         }
     }
 };

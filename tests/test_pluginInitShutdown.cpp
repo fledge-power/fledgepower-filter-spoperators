@@ -23,7 +23,7 @@ TEST(PluginInitShutdownTest, PluginInitNoConfig)
 	FilterOperationSp* filter = static_cast<FilterOperationSp*>(handle);
 	ASSERT_EQ(filter->isEnabled(), true);
 
-    ASSERT_NO_THROW(plugin_shutdown(static_cast<PLUGIN_HANDLE*>(handle)));
+    ASSERT_NO_THROW(plugin_shutdown(static_cast<PLUGIN_HANDLE>(handle)));
 }
 
 TEST(PluginInitShutdownTest, PluginShutdown) 
@@ -44,5 +44,5 @@ TEST(PluginInitShutdownTest, PluginShutdown)
 	FilterOperationSp* filter = static_cast<FilterOperationSp*>(handle);
 	ASSERT_EQ(filter->isEnabled(), true);
 
-	ASSERT_NO_THROW(plugin_shutdown(static_cast<PLUGIN_HANDLE*>(handle)));
+	ASSERT_NO_THROW(plugin_shutdown(static_cast<PLUGIN_HANDLE>(handle)));
 }

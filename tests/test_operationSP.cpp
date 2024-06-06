@@ -403,7 +403,7 @@ TEST(PluginIngestTestRaw, IngestWithNoCallbackDefined)
     ASSERT_TRUE(handle != nullptr);
     FilterOperationSp* filter = static_cast<FilterOperationSp*>(handle);
 
-    ASSERT_NO_THROW(plugin_reconfigure(static_cast<PLUGIN_HANDLE*>(handle), test_config));
+    ASSERT_NO_THROW(plugin_reconfigure(static_cast<PLUGIN_HANDLE>(handle), test_config));
     ASSERT_EQ(filter->isEnabled(), true);
 
     std::string jsonMessageTS1_1 = QUOTE({
@@ -434,7 +434,7 @@ TEST(PluginIngestTestRaw, IngestWithNoCallbackDefined)
     ASSERT_NO_THROW(plugin_ingest(filter, static_cast<READINGSET*>(readingSet)));
     ASSERT_EQ(outputHandlerCalled, 0);
 
-    ASSERT_NO_THROW(plugin_shutdown(reinterpret_cast<PLUGIN_HANDLE*>(filter)));
+    ASSERT_NO_THROW(plugin_shutdown(static_cast<PLUGIN_HANDLE>(filter)));
 }
 
 class PluginIngestTest : public testing::Test
@@ -460,7 +460,7 @@ protected:
     void TearDown() override
     {
         if (filter) {
-            ASSERT_NO_THROW(plugin_shutdown(reinterpret_cast<PLUGIN_HANDLE*>(filter)));
+            ASSERT_NO_THROW(plugin_shutdown(static_cast<PLUGIN_HANDLE>(filter)));
         }
         storedReadings = {};
     }
@@ -480,7 +480,7 @@ TEST_F(PluginIngestTest, IngestOnPluginDisabled)
         }
     });
     
-    ASSERT_NO_THROW(plugin_reconfigure(reinterpret_cast<PLUGIN_HANDLE*>(filter), reconfigure));
+    ASSERT_NO_THROW(plugin_reconfigure(static_cast<PLUGIN_HANDLE>(filter), reconfigure));
     ASSERT_EQ(filter->isEnabled(), false);
 
     std::string jsonMessageTS1_1 = generatePivotTS("SpsTyp", "M_2367_3_15_4", "1", "1669714181", "9529451");
