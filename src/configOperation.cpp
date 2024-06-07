@@ -114,7 +114,7 @@ void ConfigOperation::importDataPoint(const Value& datapoint, std::set<std::stri
                                     operationInfo.operationType.c_str(), UtilityOperation::join(operationInfo.inputPivotIds).c_str(),
                                     outputPivotId.c_str());
     }
-    if (operationsInfo.operations.size() == 0) {
+    if (operationsInfo.operations.empty()) {
         return;
     }
     m_dataOperation[outputPivotId] = operationsInfo;
@@ -122,7 +122,7 @@ void ConfigOperation::importDataPoint(const Value& datapoint, std::set<std::stri
         const auto& ops = operationsInfo.operations[i];
         for(const auto& inputPivotId: ops.inputPivotIds) {
             if(m_dataOperationLookup.count(inputPivotId)) {
-                m_dataOperationLookup[inputPivotId].push_back({outputPivotId, i});
+                m_dataOperationLookup[inputPivotId].emplace_back(outputPivotId, i);
             }
             else {
                 m_dataOperationLookup[inputPivotId] = {{outputPivotId, i}};
@@ -139,7 +139,7 @@ void ConfigOperation::importDataPoint(const Value& datapoint, std::set<std::stri
  * @param out_operationInfo : Out parameter storing the operation information
  * @return true if the import was a success, else false
 */
-bool ConfigOperation::importOperation(rapidjson::Value::ConstValueIterator itr, OperationInfo& out_operationInfo) {
+bool ConfigOperation::importOperation(rapidjson::Value::ConstValueIterator itr, OperationInfo& out_operationInfo) const {
     std::string beforeLog = ConstantsOperation::NamePlugin + " - ConfigOperation::importOperation :";
     if (!(*itr).IsObject()) {
         UtilityOperation::log_error("%s %s element is not an object", beforeLog.c_str(), ConstantsOperation::JsonOperations);

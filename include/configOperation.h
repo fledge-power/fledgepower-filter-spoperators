@@ -46,7 +46,7 @@ public:
     
 private:
     void importDataPoint(const rapidjson::Value& datapoint, std::set<std::string>& foundPivotIds);
-    bool importOperation(rapidjson::Value::ConstValueIterator itr, OperationInfo& out_operationInfo);
+    bool importOperation(rapidjson::Value::ConstValueIterator itr, OperationInfo& out_operationInfo) const;
     // Stores for each output PivotID the data used to compute its operation
     std::map<std::string, OperationsInfo> m_dataOperation;
     // Lookup table to get the list of output PivotID and operation index pairs from one of the inputs PivotIDs
