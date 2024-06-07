@@ -86,40 +86,49 @@ void ConfigOperation::importDataPoint(const Value& datapoint, std::set<std::stri
     std::string outputPivotId = datapoint[ConstantsOperation::JsonPivotId].GetString();
     out_foundPivotIds.insert(outputPivotId);
 
-    DataOperationInfo operationInfo;
-    operationInfo.outputAssetName = datapoint[ConstantsOperation::JsonLabel].GetString();
-    operationInfo.outputPivotType = datapoint[ConstantsOperation::JsonPivotType].GetString();
-    if (operationInfo.outputPivotType != ConstantsOperation::JsonCdcSps && operationInfo.outputPivotType != ConstantsOperation::JsonCdcDps) {
+    if(m_dataOperation.count(outputPivotId)) {
+        UtilityOperation::log_error("%s An operation already exists for Pivot ID '%s' (this may indicate a duplicate Pivot ID)",
+                                    beforeLog.c_str(), outputPivotId.c_str());
+        return;
+    }
+
+    OperationsInfo operationsInfo;
+    operationsInfo.outputAssetName = datapoint[ConstantsOperation::JsonLabel].GetString();
+    operationsInfo.outputPivotType = datapoint[ConstantsOperation::JsonPivotType].GetString();
+    if (operationsInfo.outputPivotType != ConstantsOperation::JsonCdcSps && operationsInfo.outputPivotType != ConstantsOperation::JsonCdcDps) {
         return;
     }
     
     if (!datapoint.HasMember(ConstantsOperation::JsonOperations) || !datapoint[ConstantsOperation::JsonOperations].IsArray()) {
         return;
     }
+
     auto operations = datapoint[ConstantsOperation::JsonOperations].GetArray();
     for (rapidjson::Value::ConstValueIterator itr = operations.Begin(); itr != operations.End(); ++itr) {
+        OperationInfo operationInfo;
         if (!importOperation(itr, operationInfo)) {
-            return;
+            continue;
         }
+        operationsInfo.operations.push_back(operationInfo);
+        UtilityOperation::log_debug("%s Configured '%s' operation for inputs [%s] and output %s", beforeLog.c_str(),
+                                    operationInfo.operationType.c_str(), UtilityOperation::join(operationInfo.inputPivotIds).c_str(),
+                                    outputPivotId.c_str());
     }
-    
-    if(m_dataOperation.count(outputPivotId)) {
-        UtilityOperation::log_error("%s An operation already exists for Pivot ID '%s' (this may indicate a duplicate Pivot ID)",
-                                    beforeLog.c_str(), outputPivotId.c_str());
+    if (operationsInfo.operations.size() == 0) {
         return;
     }
-    m_dataOperation[outputPivotId] = operationInfo;
-    for(const auto& inputPivotId: operationInfo.inputPivotIds) {
-        if(m_dataOperationLookup.count(inputPivotId)) {
-            m_dataOperationLookup[inputPivotId].push_back(outputPivotId);
-        }
-        else {
-            m_dataOperationLookup[inputPivotId] = {outputPivotId};
+    m_dataOperation[outputPivotId] = operationsInfo;
+    for(int i=0 ; i<operationsInfo.operations.size() ; i++) {
+        const auto& ops = operationsInfo.operations[i];
+        for(const auto& inputPivotId: ops.inputPivotIds) {
+            if(m_dataOperationLookup.count(inputPivotId)) {
+                m_dataOperationLookup[inputPivotId].push_back({outputPivotId, i});
+            }
+            else {
+                m_dataOperationLookup[inputPivotId] = {{outputPivotId, i}};
+            }
         }
     }
-    UtilityOperation::log_debug("%s Configured '%s' operation for inputs [%s] and output %s", beforeLog.c_str(),
-                                operationInfo.operationType.c_str(), UtilityOperation::join(operationInfo.inputPivotIds).c_str(),
-                                outputPivotId.c_str());
 }
 
 /**
@@ -130,7 +139,7 @@ void ConfigOperation::importDataPoint(const Value& datapoint, std::set<std::stri
  * @param out_operationInfo : Out parameter storing the operation information
  * @return true if the import was a success, else false
 */
-bool ConfigOperation::importOperation(rapidjson::Value::ConstValueIterator itr, DataOperationInfo& out_operationInfo) {
+bool ConfigOperation::importOperation(rapidjson::Value::ConstValueIterator itr, OperationInfo& out_operationInfo) {
     std::string beforeLog = ConstantsOperation::NamePlugin + " - ConfigOperation::importOperation :";
     if (!(*itr).IsObject()) {
         UtilityOperation::log_error("%s %s element is not an object", beforeLog.c_str(), ConstantsOperation::JsonOperations);
@@ -167,17 +176,17 @@ bool ConfigOperation::importOperation(rapidjson::Value::ConstValueIterator itr, 
 }
 
 /**
- * Returns the list of outputIds with an operation that involves the given inputId
+ * Returns the list of outputIds and operation index from operations that involves the given inputId
  * 
  * @param inputId : Input ID to look for
- * @return The list of outputIds if any, else an empty list
+ * @return The list of (outputIds, operationIndex) pairs if any, else an empty list
 */
-const std::vector<std::string>& ConfigOperation::getOutputIdsForInputId(const std::string& inputId) const {
+const std::vector<OperationInfoLookup>& ConfigOperation::getOperationsForInputId(const std::string& inputId) const {
     if (m_dataOperationLookup.count(inputId)) {
         return m_dataOperationLookup.at(inputId);
     }
     else {
-        static std::vector<std::string> empty;
+        static std::vector<OperationInfoLookup> empty;
         return empty;
     }
 }

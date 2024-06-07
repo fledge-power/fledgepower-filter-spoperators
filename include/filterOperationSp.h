@@ -33,7 +33,7 @@ public:
     void setJsonConfig(const std::string& jsonExchanged);
 
     const ConfigOperation& getConfigOperation() const { return m_configOperation;} 
-    Reading *generateReadingOperation(const Reading *dps, const std::string& outputPivotId);
+    Reading *generateReadingOperation(const Reading *dps, const std::string& outputPivotId, int operationIndex);
 
 private:
     bool processReading(Reading* reading, std::vector<Reading*>& out_vectorReadingOperation);

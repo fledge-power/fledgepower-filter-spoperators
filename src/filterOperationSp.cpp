@@ -121,8 +121,8 @@ bool FilterOperationSp::processReading(Reading* reading, std::vector<Reading*>& 
         return false;
     }
 
-    const auto& outputPivotIds = m_configOperation.getOutputIdsForInputId(inputPivotId);
-    if (outputPivotIds.empty()) {
+    const auto& operationsLookup = m_configOperation.getOperationsForInputId(inputPivotId);
+    if (operationsLookup.empty()) {
         UtilityOperation::log_debug("%s No operation configured for Pivot ID %s", beforeLog.c_str(), inputPivotId.c_str());
         return false;
     }
@@ -154,14 +154,14 @@ bool FilterOperationSp::processReading(Reading* reading, std::vector<Reading*>& 
     }
 
     bool inputIsInOutputs = false;
-    for(const std::string& outputPivotId: outputPivotIds) {
+    for(const auto& operationLookup: operationsLookup) {
         m_cachedValues[inputPivotId] = newValue;
-        Reading* newReading = generateReadingOperation(reading, outputPivotId);
+        Reading* newReading = generateReadingOperation(reading, operationLookup.outputPivotId, operationLookup.operationIndex);
         if (newReading != nullptr){
             UtilityOperation::log_debug("%s Generation of the reading [%s]", beforeLog.c_str(), newReading->toJSON().c_str());
             out_vectorReadingOperation.push_back(newReading);
             // Only delete input reading if a replacement was generated
-            if (inputPivotId == outputPivotId) {
+            if (inputPivotId == operationLookup.outputPivotId) {
                 inputIsInOutputs = true;
             }
         }
@@ -176,7 +176,7 @@ bool FilterOperationSp::processReading(Reading* reading, std::vector<Reading*>& 
  * @param outputPivotId pivot ID of the output TI to produce
  * @return a modified reading
 */
-Reading *FilterOperationSp::generateReadingOperation(const Reading *reading, const std::string& outputPivotId) {
+Reading *FilterOperationSp::generateReadingOperation(const Reading *reading, const std::string& outputPivotId, int operationIndex) {
     string beforeLog = ConstantsOperation::NamePlugin + " - FilterOperationSp::generateReadingOperation :";
     
     // Find operation info to generate the reading
@@ -186,7 +186,8 @@ Reading *FilterOperationSp::generateReadingOperation(const Reading *reading, con
                                     beforeLog.c_str(), outputPivotId.c_str());
         return nullptr;
     }
-    const auto& operationInfo = dataOperations.at(outputPivotId);
+    const auto& operationsInfo = dataOperations.at(outputPivotId);
+    const auto& operationInfo = operationsInfo.operations.at(operationIndex);
 
     // Compute new reading value by applying operation logic
     const std::string& operationType = operationInfo.operationType;
@@ -197,7 +198,7 @@ Reading *FilterOperationSp::generateReadingOperation(const Reading *reading, con
             newValue = newValue || m_cachedValues[inputPivotId]; 
         }
     }
-    bool targetTypeSps = (operationInfo.outputPivotType == ConstantsOperation::JsonCdcSps);
+    bool targetTypeSps = (operationsInfo.outputPivotType == ConstantsOperation::JsonCdcSps);
     
     // Ensure input reading is not null
     if (reading == nullptr) {
@@ -241,7 +242,7 @@ Reading *FilterOperationSp::generateReadingOperation(const Reading *reading, con
     // If the output type does not match the current type found in the reading, rewrite that part of the reading
     if (typeSps != targetTypeSps) {
         Datapoint *cdcTypeDp = findDatapointElement(dpGtis, typeSps?ConstantsOperation::JsonCdcSps:ConstantsOperation::JsonCdcDps);
-        cdcTypeDp->setName(operationInfo.outputPivotType);
+        cdcTypeDp->setName(operationsInfo.outputPivotType);
     }
     // Set computed value
     if (targetTypeSps) {
@@ -260,7 +261,7 @@ Reading *FilterOperationSp::generateReadingOperation(const Reading *reading, con
     createStringElement(dpQ, ConstantsOperation::KeyMessagePivotJsonSource, ConstantsOperation::ValueSubstituted);
 
     auto newDatapointOperation = new Datapoint(dpRoot->getName(), newValueOperation);
-    auto newReading = new Reading(operationInfo.outputAssetName, newDatapointOperation);
+    auto newReading = new Reading(operationsInfo.outputAssetName, newDatapointOperation);
     return newReading;
 }
 

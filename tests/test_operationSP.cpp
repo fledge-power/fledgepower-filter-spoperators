@@ -1199,11 +1199,11 @@ TEST_F(PluginIngestTest, InvalidMessages)
     // so test them by calling the inner function of the filter directly
     
     debug_print("Testing generation with identifier that has no operation");
-    ASSERT_NO_THROW(currentReading.reset(filter->generateReadingOperation(nullptr, "M_2367_3_15_4")));
+    ASSERT_NO_THROW(currentReading.reset(filter->generateReadingOperation(nullptr, "M_2367_3_15_4", 0)));
     ASSERT_EQ(currentReading.get(), nullptr);
 
     debug_print("Testing generation with nullptr input reading");
-    ASSERT_NO_THROW(currentReading.reset(filter->generateReadingOperation(nullptr, "M_2367_3_15_5")));
+    ASSERT_NO_THROW(currentReading.reset(filter->generateReadingOperation(nullptr, "M_2367_3_15_5", 0)));
     ASSERT_EQ(currentReading.get(), nullptr);
 
     debug_print("Testing generation with unknown root object");
@@ -1213,7 +1213,7 @@ TEST_F(PluginIngestTest, InvalidMessages)
     ASSERT_NE(readingSet, nullptr);
     auto readings = readingSet->getAllReadings();
     ASSERT_EQ(readings.size(), 1);
-    ASSERT_NO_THROW(currentReading.reset(filter->generateReadingOperation(readings[0], "M_2367_3_15_5")));
+    ASSERT_NO_THROW(currentReading.reset(filter->generateReadingOperation(readings[0], "M_2367_3_15_5", 0)));
     ASSERT_EQ(currentReading.get(), nullptr);
 
     debug_print("Testing generation with missing/invalid root type");
@@ -1223,7 +1223,7 @@ TEST_F(PluginIngestTest, InvalidMessages)
     ASSERT_NE(readingSet, nullptr);
     readings = readingSet->getAllReadings();
     ASSERT_EQ(readings.size(), 1);
-    ASSERT_NO_THROW(currentReading.reset(filter->generateReadingOperation(readings[0], "M_2367_3_15_5")));
+    ASSERT_NO_THROW(currentReading.reset(filter->generateReadingOperation(readings[0], "M_2367_3_15_5", 0)));
     ASSERT_EQ(currentReading.get(), nullptr);
 
     debug_print("Testing generation with invalid pivot type");
@@ -1233,6 +1233,6 @@ TEST_F(PluginIngestTest, InvalidMessages)
     ASSERT_NE(readingSet, nullptr);
     readings = readingSet->getAllReadings();
     ASSERT_EQ(readings.size(), 1);
-    ASSERT_NO_THROW(currentReading.reset(filter->generateReadingOperation(readings[0], "M_2367_3_15_5")));
+    ASSERT_NO_THROW(currentReading.reset(filter->generateReadingOperation(readings[0], "M_2367_3_15_5", 0)));
     ASSERT_EQ(currentReading.get(), nullptr);
 }

@@ -18,27 +18,39 @@
 #include <set>
 #include <string>
 
-struct DataOperationInfo {
+struct OperationInfo {
     std::string operationType;
     std::vector<std::string> inputPivotIds;
+};
+
+struct OperationsInfo {
+    std::vector<OperationInfo> operations;
     std::string outputPivotType;
     std::string outputAssetName;
+};
+
+struct OperationInfoLookup {
+    std::string outputPivotId;
+    int operationIndex = 0;
+    OperationInfoLookup(const std::string& in_outputPivotId, int in_operationIndex):
+        outputPivotId(in_outputPivotId),
+        operationIndex(in_operationIndex) {}
 };
 
 class ConfigOperation {
 public:  
     void importExchangedData(const std::string & exchangeConfig);
-    const std::vector<std::string>& getOutputIdsForInputId(const std::string& inputId) const;
+    const std::vector<OperationInfoLookup>& getOperationsForInputId(const std::string& inputId) const;
 
-    const std::map<std::string, DataOperationInfo>& getDataOperations() const { return m_dataOperation; };
+    const std::map<std::string, OperationsInfo>& getDataOperations() const { return m_dataOperation; };
     
 private:
     void importDataPoint(const rapidjson::Value& datapoint, std::set<std::string>& foundPivotIds);
-    bool importOperation(rapidjson::Value::ConstValueIterator itr, DataOperationInfo& out_operationInfo);
+    bool importOperation(rapidjson::Value::ConstValueIterator itr, OperationInfo& out_operationInfo);
     // Stores for each output PivotID the data used to compute its operation
-    std::map<std::string, DataOperationInfo> m_dataOperation;
-    // Lookup table to get the output PivotIDs from one of the inputs PivotIDs
-    std::map<std::string, std::vector<std::string>> m_dataOperationLookup;
+    std::map<std::string, OperationsInfo> m_dataOperation;
+    // Lookup table to get the list of output PivotID and operation index pairs from one of the inputs PivotIDs
+    std::map<std::string, std::vector<OperationInfoLookup>> m_dataOperationLookup;
     // List of operations supported
     const std::set<std::string> m_supportedOperationTypes = {"or"};
 };

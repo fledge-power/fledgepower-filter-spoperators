@@ -66,7 +66,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorNoExchangedData)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -110,7 +110,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorNoDatapoints)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -169,7 +169,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorNoPivotType)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -203,7 +203,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorPivotTypeNotString)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -237,7 +237,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorPivotTypeMv)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -270,7 +270,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorNoPivotID)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -304,7 +304,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorPivotIDNotString)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -337,7 +337,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorNoLabel)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -371,7 +371,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorLabelNotString)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -450,7 +450,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorOperationsElementNotObject)
                     "pivot_type" : "SpsTyp",
                     "operations" : [
                         42
-                    ] ,
+                    ],
                     "protocols" : [
                         {
                             "name":"IEC104",
@@ -483,7 +483,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorNoOperation)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -517,7 +517,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorOperationNotString)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -551,7 +551,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorUnknownOperation)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -581,7 +581,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorNoInput)
                         {
                             "operation": "or"
                         }
-                    ] ,
+                    ],
                     "protocols" : [
                         {
                             "name":"IEC104",
@@ -612,7 +612,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorInputNotArray)
                             "operation": "or",
                             "input" : 42
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -645,7 +645,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorInputElementNotString)
                                 42
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -660,6 +660,74 @@ TEST_F(PluginConfigureTest, ConfigureErrorInputElementNotString)
 
     filter->setJsonConfig(configureErrorInputElementNotString);
     ASSERT_EQ(filter->getConfigOperation().getDataOperations().size(), 0);
+}
+
+TEST_F(PluginConfigureTest, ConfigureCaseEmptyOperations)
+{
+    static std::string configureCaseEmptyOperations = QUOTE({
+        "exchanged_data": {
+            "datapoints" : [
+                {
+                    "label":"TS-1",
+                    "pivot_id" : "M_2367_3_15_4",
+                    "pivot_type" : "SpsTyp",
+                    "operations" : [],
+                    "protocols": [
+                        {
+                            "name":"IEC104",
+                            "typeid" : "M_ME_NC_1",
+                            "address" : "3271611"
+                        }
+                    ]
+                }
+            ]
+        }
+    });
+
+    filter->setJsonConfig(configureCaseEmptyOperations);
+    ASSERT_EQ(filter->getConfigOperation().getDataOperations().size(), 0);
+}
+
+TEST_F(PluginConfigureTest, ConfigureCaseEmptyInput)
+{
+    static std::string configureCaseEmptyInput = QUOTE({
+        "exchanged_data": {
+            "datapoints" : [
+                {
+                    "label":"TS-1",
+                    "pivot_id" : "M_2367_3_15_4",
+                    "pivot_type" : "SpsTyp",
+                    "operations" : [
+                        {
+                            "operation": "or",
+                            "input" : []
+                        }
+                    ],
+                    "protocols": [
+                        {
+                            "name":"IEC104",
+                            "typeid" : "M_ME_NC_1",
+                            "address" : "3271611"
+                        }
+                    ]
+                }
+            ]
+        }
+    });
+
+    filter->setJsonConfig(configureCaseEmptyInput);
+    auto dataOperation = filter->getConfigOperation().getDataOperations();
+    ASSERT_EQ(dataOperation.size(), 1);
+    ASSERT_EQ(dataOperation.count("M_2367_3_15_4"), 1);
+    const auto& dataOperationInfo = dataOperation.at("M_2367_3_15_4");
+    ASSERT_STREQ(dataOperationInfo.outputPivotType.c_str(), "SpsTyp");
+    ASSERT_EQ(dataOperationInfo.operations.size(), 1);
+    ASSERT_STREQ(dataOperationInfo.operations[0].operationType.c_str(), "or");
+    ASSERT_EQ(dataOperationInfo.operations[0].inputPivotIds.size(), 0);
+    auto operationsLookupVec = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_4");
+    ASSERT_EQ(operationsLookupVec.size(), 0);
+    auto operationsLookupVec2 = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_5");
+    ASSERT_EQ(operationsLookupVec2.size(), 0);
 }
 
 TEST_F(PluginConfigureTest, ConfigureWarningUnexistingPivotId)
@@ -679,7 +747,7 @@ TEST_F(PluginConfigureTest, ConfigureWarningUnexistingPivotId)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -698,19 +766,22 @@ TEST_F(PluginConfigureTest, ConfigureWarningUnexistingPivotId)
     ASSERT_EQ(dataOperation.count("M_2367_3_15_4"), 1);
     ASSERT_EQ(dataOperation.count("M_2367_3_15_5"), 0);
     const auto& dataOperationInfo = dataOperation.at("M_2367_3_15_4");
-    ASSERT_STREQ(dataOperationInfo.operationType.c_str(), "or");
     ASSERT_STREQ(dataOperationInfo.outputPivotType.c_str(), "SpsTyp");
-    ASSERT_EQ(dataOperationInfo.inputPivotIds.size(), 2);
-    ASSERT_STREQ(dataOperationInfo.inputPivotIds[0].c_str(), "M_2367_3_15_4");
-    ASSERT_STREQ(dataOperationInfo.inputPivotIds[1].c_str(), "M_2367_3_15_5");
-    auto pivotIdVec = filter->getConfigOperation().getOutputIdsForInputId("M_2367_3_15_4");
-    ASSERT_EQ(pivotIdVec.size(), 1);
-    ASSERT_STREQ(pivotIdVec[0].c_str(), "M_2367_3_15_4");
-    auto pivotIdVec2 = filter->getConfigOperation().getOutputIdsForInputId("M_2367_3_15_5");
-    ASSERT_EQ(pivotIdVec2.size(), 1);
-    ASSERT_STREQ(pivotIdVec2[0].c_str(), "M_2367_3_15_4");
-    auto pivotIdVec3 = filter->getConfigOperation().getOutputIdsForInputId("unknown");
-    ASSERT_EQ(pivotIdVec3.size(), 0);
+    ASSERT_EQ(dataOperationInfo.operations.size(), 1);
+    ASSERT_STREQ(dataOperationInfo.operations[0].operationType.c_str(), "or");
+    ASSERT_EQ(dataOperationInfo.operations[0].inputPivotIds.size(), 2);
+    ASSERT_STREQ(dataOperationInfo.operations[0].inputPivotIds[0].c_str(), "M_2367_3_15_4");
+    ASSERT_STREQ(dataOperationInfo.operations[0].inputPivotIds[1].c_str(), "M_2367_3_15_5");
+    auto operationsLookupVec = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_4");
+    ASSERT_EQ(operationsLookupVec.size(), 1);
+    ASSERT_STREQ(operationsLookupVec[0].outputPivotId.c_str(), "M_2367_3_15_4");
+    ASSERT_EQ(operationsLookupVec[0].operationIndex, 0);
+    auto operationsLookupVec2 = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_5");
+    ASSERT_EQ(operationsLookupVec2.size(), 1);
+    ASSERT_STREQ(operationsLookupVec2[0].outputPivotId.c_str(), "M_2367_3_15_4");
+    ASSERT_EQ(operationsLookupVec2[0].operationIndex, 0);
+    auto operationsLookupVec3 = filter->getConfigOperation().getOperationsForInputId("unknown");
+    ASSERT_EQ(operationsLookupVec3.size(), 0);
 }
 
 TEST_F(PluginConfigureTest, ConfigureOKSpsDps)
@@ -730,7 +801,7 @@ TEST_F(PluginConfigureTest, ConfigureOKSpsDps)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -750,8 +821,22 @@ TEST_F(PluginConfigureTest, ConfigureOKSpsDps)
                                 "M_2367_3_15_4",
                                 "M_2367_3_15_5"
                             ]
+                        },
+                        {
+                            "operation": "or",
+                            "input" : [
+                                "M_2367_3_15_5",
+                                "M_2367_3_15_6",
+                                "M_2367_3_15_7"
+                            ]
+                        },
+                        {
+                            "operation": "or",
+                            "input" : [
+                                "M_2367_3_15_8"
+                            ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -769,26 +854,54 @@ TEST_F(PluginConfigureTest, ConfigureOKSpsDps)
     ASSERT_EQ(dataOperation.size(), 2);
     ASSERT_EQ(dataOperation.count("M_2367_3_15_4"), 1);;
     const auto& dataOperationInfo = dataOperation.at("M_2367_3_15_4");
-    ASSERT_STREQ(dataOperationInfo.operationType.c_str(), "or");
     ASSERT_STREQ(dataOperationInfo.outputPivotType.c_str(), "SpsTyp");
-    ASSERT_EQ(dataOperationInfo.inputPivotIds.size(), 2);
-    ASSERT_STREQ(dataOperationInfo.inputPivotIds[0].c_str(), "M_2367_3_15_4");
-    ASSERT_STREQ(dataOperationInfo.inputPivotIds[1].c_str(), "M_2367_3_15_5");
+    ASSERT_EQ(dataOperationInfo.operations.size(), 1);
+    ASSERT_STREQ(dataOperationInfo.operations[0].operationType.c_str(), "or");
+    ASSERT_EQ(dataOperationInfo.operations[0].inputPivotIds.size(), 2);
+    ASSERT_STREQ(dataOperationInfo.operations[0].inputPivotIds[0].c_str(), "M_2367_3_15_4");
+    ASSERT_STREQ(dataOperationInfo.operations[0].inputPivotIds[1].c_str(), "M_2367_3_15_5");
     ASSERT_EQ(dataOperation.count("M_2367_3_15_5"), 1);
     const auto& dataOperationInfo2 = dataOperation.at("M_2367_3_15_5");
-    ASSERT_STREQ(dataOperationInfo2.operationType.c_str(), "or");
     ASSERT_STREQ(dataOperationInfo2.outputPivotType.c_str(), "DpsTyp");
-    ASSERT_EQ(dataOperationInfo2.inputPivotIds.size(), 2);
-    ASSERT_STREQ(dataOperationInfo2.inputPivotIds[0].c_str(), "M_2367_3_15_4");
-    ASSERT_STREQ(dataOperationInfo2.inputPivotIds[1].c_str(), "M_2367_3_15_5");
-    auto pivotIdVec = filter->getConfigOperation().getOutputIdsForInputId("M_2367_3_15_4");
-    ASSERT_EQ(pivotIdVec.size(), 2);
-    ASSERT_STREQ(pivotIdVec[0].c_str(), "M_2367_3_15_4");
-    ASSERT_STREQ(pivotIdVec[1].c_str(), "M_2367_3_15_5");
-    auto pivotIdVec2 = filter->getConfigOperation().getOutputIdsForInputId("M_2367_3_15_5");
-    ASSERT_EQ(pivotIdVec2.size(), 2);
-    ASSERT_STREQ(pivotIdVec2[0].c_str(), "M_2367_3_15_4");
-    ASSERT_STREQ(pivotIdVec2[1].c_str(), "M_2367_3_15_5");
+    ASSERT_EQ(dataOperationInfo2.operations.size(), 3);
+    ASSERT_STREQ(dataOperationInfo2.operations[0].operationType.c_str(), "or");
+    ASSERT_EQ(dataOperationInfo2.operations[0].inputPivotIds.size(), 2);
+    ASSERT_STREQ(dataOperationInfo2.operations[0].inputPivotIds[0].c_str(), "M_2367_3_15_4");
+    ASSERT_STREQ(dataOperationInfo2.operations[0].inputPivotIds[1].c_str(), "M_2367_3_15_5");
+    ASSERT_STREQ(dataOperationInfo2.operations[1].operationType.c_str(), "or");
+    ASSERT_EQ(dataOperationInfo2.operations[1].inputPivotIds.size(), 3);
+    ASSERT_STREQ(dataOperationInfo2.operations[1].inputPivotIds[0].c_str(), "M_2367_3_15_5");
+    ASSERT_STREQ(dataOperationInfo2.operations[1].inputPivotIds[1].c_str(), "M_2367_3_15_6");
+    ASSERT_STREQ(dataOperationInfo2.operations[1].inputPivotIds[2].c_str(), "M_2367_3_15_7");
+    ASSERT_STREQ(dataOperationInfo2.operations[2].operationType.c_str(), "or");
+    ASSERT_EQ(dataOperationInfo2.operations[2].inputPivotIds.size(), 1);
+    ASSERT_STREQ(dataOperationInfo2.operations[2].inputPivotIds[0].c_str(), "M_2367_3_15_8");
+    auto operationsLookupVec = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_4");
+    ASSERT_EQ(operationsLookupVec.size(), 2);
+    ASSERT_STREQ(operationsLookupVec[0].outputPivotId.c_str(), "M_2367_3_15_4");
+    ASSERT_EQ(operationsLookupVec[0].operationIndex, 0);
+    ASSERT_STREQ(operationsLookupVec[1].outputPivotId.c_str(), "M_2367_3_15_5");
+    ASSERT_EQ(operationsLookupVec[1].operationIndex, 0);
+    auto operationsLookupVec2 = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_5");
+    ASSERT_EQ(operationsLookupVec2.size(), 3);
+    ASSERT_STREQ(operationsLookupVec2[0].outputPivotId.c_str(), "M_2367_3_15_4");
+    ASSERT_EQ(operationsLookupVec2[0].operationIndex, 0);
+    ASSERT_STREQ(operationsLookupVec2[1].outputPivotId.c_str(), "M_2367_3_15_5");
+    ASSERT_EQ(operationsLookupVec2[1].operationIndex, 0);
+    ASSERT_STREQ(operationsLookupVec2[2].outputPivotId.c_str(), "M_2367_3_15_5");
+    ASSERT_EQ(operationsLookupVec2[2].operationIndex, 1);
+    auto operationsLookupVec3 = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_6");
+    ASSERT_EQ(operationsLookupVec3.size(), 1);
+    ASSERT_STREQ(operationsLookupVec3[0].outputPivotId.c_str(), "M_2367_3_15_5");
+    ASSERT_EQ(operationsLookupVec3[0].operationIndex, 1);
+    auto operationsLookupVec4 = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_7");
+    ASSERT_EQ(operationsLookupVec4.size(), 1);
+    ASSERT_STREQ(operationsLookupVec4[0].outputPivotId.c_str(), "M_2367_3_15_5");
+    ASSERT_EQ(operationsLookupVec4[0].operationIndex, 1);
+    auto operationsLookupVec5 = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_8");
+    ASSERT_EQ(operationsLookupVec5.size(), 1);
+    ASSERT_STREQ(operationsLookupVec5[0].outputPivotId.c_str(), "M_2367_3_15_5");
+    ASSERT_EQ(operationsLookupVec5[0].operationIndex, 2);
 }
 
 TEST_F(PluginConfigureTest, ConfigureErrorDuplicatePivotID)
@@ -808,7 +921,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorDuplicatePivotID)
                                 "M_2367_3_15_7"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -829,7 +942,7 @@ TEST_F(PluginConfigureTest, ConfigureErrorDuplicatePivotID)
                                 "M_2367_3_15_5"
                             ]
                         }
-                    ] ,
+                    ],
                     "protocols": [
                         {
                             "name":"IEC104",
@@ -847,19 +960,22 @@ TEST_F(PluginConfigureTest, ConfigureErrorDuplicatePivotID)
     ASSERT_EQ(dataOperation.size(), 1);
     ASSERT_EQ(dataOperation.count("M_2367_3_15_4"), 1);
     const auto& dataOperationInfo = dataOperation.at("M_2367_3_15_4");
-    ASSERT_STREQ(dataOperationInfo.operationType.c_str(), "or");
     ASSERT_STREQ(dataOperationInfo.outputPivotType.c_str(), "SpsTyp");
-    ASSERT_EQ(dataOperationInfo.inputPivotIds.size(), 2);
-    ASSERT_STREQ(dataOperationInfo.inputPivotIds[0].c_str(), "M_2367_3_15_6");
-    ASSERT_STREQ(dataOperationInfo.inputPivotIds[1].c_str(), "M_2367_3_15_7");
-    auto pivotIdVec = filter->getConfigOperation().getOutputIdsForInputId("M_2367_3_15_6");
-    ASSERT_EQ(pivotIdVec.size(), 1);
-    ASSERT_STREQ(pivotIdVec[0].c_str(), "M_2367_3_15_4");
-    auto pivotIdVec2 = filter->getConfigOperation().getOutputIdsForInputId("M_2367_3_15_7");
-    ASSERT_EQ(pivotIdVec2.size(), 1);
-    ASSERT_STREQ(pivotIdVec2[0].c_str(), "M_2367_3_15_4");
-    auto pivotIdVec3 = filter->getConfigOperation().getOutputIdsForInputId("M_2367_3_15_4");
-    ASSERT_EQ(pivotIdVec3.size(), 0);
-    auto pivotIdVec4 = filter->getConfigOperation().getOutputIdsForInputId("M_2367_3_15_5");
-    ASSERT_EQ(pivotIdVec4.size(), 0);
+    ASSERT_EQ(dataOperationInfo.operations.size(), 1);
+    ASSERT_STREQ(dataOperationInfo.operations[0].operationType.c_str(), "or");
+    ASSERT_EQ(dataOperationInfo.operations[0].inputPivotIds.size(), 2);
+    ASSERT_STREQ(dataOperationInfo.operations[0].inputPivotIds[0].c_str(), "M_2367_3_15_6");
+    ASSERT_STREQ(dataOperationInfo.operations[0].inputPivotIds[1].c_str(), "M_2367_3_15_7");
+    auto operationsLookupVec = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_6");
+    ASSERT_EQ(operationsLookupVec.size(), 1);
+    ASSERT_STREQ(operationsLookupVec[0].outputPivotId.c_str(), "M_2367_3_15_4");
+    ASSERT_EQ(operationsLookupVec[0].operationIndex, 0);
+    auto operationsLookupVec2 = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_7");
+    ASSERT_EQ(operationsLookupVec2.size(), 1);
+    ASSERT_STREQ(operationsLookupVec2[0].outputPivotId.c_str(), "M_2367_3_15_4");
+    ASSERT_EQ(operationsLookupVec2[0].operationIndex, 0);
+    auto operationsLookupVec3 = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_4");
+    ASSERT_EQ(operationsLookupVec3.size(), 0);
+    auto operationsLookupVec4 = filter->getConfigOperation().getOperationsForInputId("M_2367_3_15_5");
+    ASSERT_EQ(operationsLookupVec4.size(), 0);
 }
