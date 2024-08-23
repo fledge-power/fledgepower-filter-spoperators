@@ -1,1 +1,1 @@
-This filter plugin performs operations with multiple status points to produce a single status point value.
+This filter plugin performs operations with multiple status points to produce a single status point value ([Status Points Operations](https://wiki.lfenergy.org/display/FLED/Status+points+operations)).
